@@ -16,7 +16,7 @@ class HeartDiseaseAPIService {
   private readonly baseURL: string;
 
   constructor() {
-    this.baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+    this.baseURL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/+$/, '');
     
     this.api = axios.create({
       baseURL: `${this.baseURL}/api/v1`,
@@ -141,17 +141,17 @@ class HeartDiseaseAPIService {
   /**
    * Handle API errors consistently
    */
-  private handleAPIError(error: any): Error {
-    if (error.response) {
+  private handleAPIError(error: unknown): Error {
+    if (axios.isAxiosError(error) && error.response) {
       // Server responded with error status
       const message = error.response.data?.detail || error.response.data?.message || 'Unknown server error';
       return new Error(`Server Error (${error.response.status}): ${message}`);
-    } else if (error.request) {
+    } else if (axios.isAxiosError(error) && error.request) {
       // Network error
       return new Error('Network Error: Unable to connect to the server. Please check your internet connection.');
     } else {
       // Other error
-      return new Error(`Request Error: ${error.message}`);
+      return new Error(`Request Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 

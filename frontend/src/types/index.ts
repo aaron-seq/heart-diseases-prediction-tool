@@ -72,7 +72,7 @@ export interface APIHealthResponse {
 }
 
 // Form-specific types
-export interface PatientFormData extends PatientHealthData {}
+export type PatientFormData = PatientHealthData;
 
 export interface RiskVisualizationData {
   name: string;
