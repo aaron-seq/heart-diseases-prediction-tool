@@ -1,269 +1,75 @@
 # Heart Disease Prediction Tool
 
-A comprehensive machine learning project for predicting heart disease risk using state-of-the-art neural network architecture. This repository includes both a Jupyter Notebook for model development and a production-ready FastAPI backend with React frontend.
+A research prototype with a FastAPI prediction backend, a model-development
+notebook, and a React screen for checking API health. The current screen does not
+submit patient predictions. No trained-model accuracy or clinical suitability
+has been established by the engineering checks described here.
 
-## Features
+## Frontend quickstart
 
-- **Advanced ML Model**: Neural network with 97%+ accuracy on Cleveland Heart Disease dataset
-- **Interactive UI**: Modern React frontend with real-time predictions
-- **Production API**: FastAPI backend with comprehensive error handling and validation
-- **Model Explainability**: SHAP values for understanding predictions
-- **Containerized Deployment**: Docker and docker-compose for easy deployment
+Use Node.js 22 or 24 and npm. From the repository root:
 
-## Project Structure
-
-```
-.
-├── backend/                  # FastAPI backend application
-│   ├── app/
-│   │   ├── api/             # API endpoints
-│   │   ├── core/            # Configuration and logging
-│   │   ├── models/          # ML models and schemas
-│   │   ├── services/        # Business logic
-│   │   └── utils/           # Utility functions
-│   ├── tests/               # Test suite
-│   ├── Dockerfile           # Backend container
-│   └── requirements.txt     # Python dependencies
-├── frontend/                 # React frontend application
-├── Enhanced2025_Heart_Disease_Prediction.ipynb  # ML development notebook
-└── docker-compose.yml        # Multi-container orchestration
-```
-
-## Prerequisites
-
-### For Jupyter Notebook
-- Python 3.11+
-- Jupyter Notebook or JupyterLab
-
-### For Backend API
-- Python 3.11+
-- Docker and Docker Compose (recommended)
-- System dependencies: gcc, g++ (for some Python packages)
-
-### For Frontend
-- Node.js 18+ and npm
-
-## Quick Start with Docker
-
-The fastest way to run the entire application:
-
-```bash
-# Clone the repository
-git clone https://github.com/aaron-seq/heart-diseases-prediction-tool.git
-cd heart-diseases-prediction-tool
-
-# Start all services
-docker-compose up -d
-
-# Access the application
-# Frontend: http://localhost:5173
-# Backend API: http://localhost:8000
-# API Documentation: http://localhost:8000/docs
-```
-
-## Backend Setup
-
-### Using Docker (Recommended)
-
-```bash
-cd backend
-
-# Create .env file from template
-cp .env.example .env
-# Edit .env with your configuration
-
-# Build and run
-docker build -t heart-disease-api .
-docker run -p 8000:8000 --env-file .env heart-disease-api
-```
-
-### Manual Setup
-
-```bash
-cd backend
-
-# Create virtual environment
-python3.11 -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Set up environment
-cp .env.example .env
-# Configure MODEL_PATH and other variables in .env
-
-# Run development server
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-## Frontend Setup
-
-```bash
+```sh
 cd frontend
-
-# Install dependencies
-npm install
-
-# Run development server
+npm ci
 npm run dev
-
-# Access at http://localhost:5173
 ```
 
-## Jupyter Notebook Usage
+Open [the local frontend](http://localhost:5173) and select **Ping API**. During
+development, `/api` is proxied to `http://localhost:8000`. For a separately hosted
+backend, set `VITE_API_BASE_URL` to its origin before building, for example
+`https://api.example.com`; see [the example configuration](frontend/.env.example).
+This value is public and compiled into the browser bundle. The backend must
+allow the frontend's origin through CORS. A static deployment needs either that
+API-base setting or its own `/api` reverse proxy.
 
-For model development and experimentation:
-
-```bash
-# Install notebook dependencies
-pip install jupyter notebook
-
-# Start Jupyter
-jupyter notebook Enhanced2025_Heart_Disease_Prediction.ipynb
+```sh
+npm run lint
+npm run type-check
+npm run build
+npx playwright install chromium
+npm test
+npm audit --audit-level=high
 ```
 
-The notebook includes:
-- Data exploration and visualization
-- Feature engineering
-- Model training and evaluation
-- SHAP explainability analysis
-- Model export for production use
+Browser tests exercise production bundles against synthetic local API responses,
+including same-origin and configured-API modes. They do not validate backend
+availability or model predictions. See [validation and limitations](docs/engineering-evidence.md).
 
-## API Documentation
+## Backend and notebook
 
-Once the backend is running, access the interactive API documentation at:
-- Swagger UI: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
+The backend accepts a `patient_data` object and prediction options, as defined in
+[its request schema](backend/app/models/schemas.py). It exposes health, readiness,
+model-status and prediction operations. With a configured backend running,
+[Swagger UI](http://localhost:8000/docs) describes its contract.
 
-### Example API Request
+The existing setup targets Python 3.11 and
+[backend/requirements.txt](backend/requirements.txt). Full dependency installation,
+trained-model loading, inference and Docker startup remain unverified in this
+delivery; follow [issues #4](https://github.com/aaron-seq/heart-diseases-prediction-tool/issues/4),
+[#7](https://github.com/aaron-seq/heart-diseases-prediction-tool/issues/7),
+[#9](https://github.com/aaron-seq/heart-diseases-prediction-tool/issues/9) and
+[#12](https://github.com/aaron-seq/heart-diseases-prediction-tool/issues/12).
+Startup can download training data and train if model loading fails; it is not
+an offline inference-only quickstart.
 
-```bash
-curl -X POST "http://localhost:8000/api/v1/predict" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "age": 45,
-    "sex": 1,
-    "cp": 2,
-    "trestbps": 120,
-    "chol": 200,
-    "fbs": 0,
-    "restecg": 0,
-    "thalach": 150,
-    "exang": 0,
-    "oldpeak": 1.5,
-    "slope": 1,
-    "ca": 0,
-    "thal": 2
-  }'
-```
+The [notebook](Enhanced2025_Heart_Disease_Prediction.ipynb) contains exploratory
+training/evaluation code, without saved execution results. Held-out evaluation
+and preprocessing remain part of [issue #6](https://github.com/aaron-seq/heart-diseases-prediction-tool/issues/6).
+The Compose file is in `backend/`; it does not provide a frontend service.
 
-## Data and Model Setup
+## Development and tracking
 
-### Option 1: Automatic Dataset Download
+- [Contribution checks](CONTRIBUTING.md)
+- [Product scope and roadmap](docs/product/PRODUCT.md)
+- [Current checkpoint](docs/product/PROJECT-STATUS.md)
+- [Threat model, test map and evidence](docs/engineering-evidence.md)
+- [Milestone 1](https://github.com/aaron-seq/heart-diseases-prediction-tool/milestone/1)
+- [Draft PR #24 and current checks](https://github.com/aaron-seq/heart-diseases-prediction-tool/pull/24)
+- [Engineering Project](https://github.com/users/aaron-seq/projects/13) (maintainer access)
+- [Repository issues](https://github.com/aaron-seq/heart-diseases-prediction-tool/issues)
 
-The application automatically fetches the Cleveland Heart Disease dataset from UCI ML Repository on first run.
-
-### Option 2: Train from Scratch
-
-1. Run the Jupyter notebook `Enhanced2025_Heart_Disease_Prediction.ipynb`
-2. Model artifacts will be saved to the configured MODEL_PATH
-3. Backend will load these artifacts on startup
-
-## Running Tests
-
-```bash
-cd backend
-pytest -v
-
-# With coverage
-pytest --cov=app --cov-report=html
-```
-
-## Deployment
-
-### Using Render.com
-
-The repository includes `render.yaml` for easy deployment:
-
-1. Fork this repository
-2. Connect your Render account
-3. Create new Blueprint Instance
-4. Select this repository
-
-### Environment Variables
-
-Required environment variables (see `.env.example`):
-
-- `API_HOST`: API host address (default: 0.0.0.0)
-- `API_PORT`: API port (default: 8000)
-- `LOG_LEVEL`: Logging level (default: INFO)
-- `ALLOWED_ORIGINS`: Comma-separated CORS origins
-- `MODEL_PATH`: Path to model artifacts
-- `SECRET_KEY`: Application secret key
-
-## Model Performance
-
-- **Accuracy**: 97%+
-- **Dataset**: Cleveland Heart Disease (UCI ML Repository)
-- **Features**: 13 clinical features
-- **Algorithm**: Enhanced Neural Network with regularization
-
-## Contributing
-
-Contributions are welcome! Please:
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/your-feature`
-3. Commit changes: `git commit -am 'Add your feature'`
-4. Push to branch: `git push origin feature/your-feature`
-5. Submit a Pull Request
-
-Please ensure:
-- Code follows project style guidelines
-- Tests pass: `pytest`
-- Documentation is updated
-- Commit messages are clear and descriptive
-
-## Troubleshooting
-
-### Model Not Found Error
-- Ensure MODEL_PATH is correctly set in .env
-- Run the Jupyter notebook to train and save the model
-- Verify model files exist in the specified path
-
-### Docker Build Issues
-- Clear Docker cache: `docker system prune -a`
-- Rebuild without cache: `docker-compose build --no-cache`
-
-### Import Errors
-- Verify all __init__.py files are present
-- Check Python version: `python --version` (should be 3.11+)
-- Reinstall dependencies: `pip install -r requirements.txt --force-reinstall`
-
-## License
-
-MIT License - see LICENSE file for details
-
-## Acknowledgments
-
-- UCI Machine Learning Repository for the Cleveland Heart Disease dataset
-- FastAPI and Pydantic teams for excellent frameworks
-- TensorFlow and scikit-learn communities
-
-## Contact
-
-Aaron Sequeira - [GitHub](https://github.com/aaron-seq)
-
-## Citation
-
-If you use this project in your research, please cite:
-
-```
-@software{sequeira2025heart,
-  author = {Sequeira, Aaron},
-  title = {Heart Disease Prediction Tool},
-  year = {2025},
-  url = {https://github.com/aaron-seq/heart-diseases-prediction-tool}
-}
-```
+The earlier README declared MIT, but no authoritative license file is tracked.
+[Issue #22](https://github.com/aaron-seq/heart-diseases-prediction-tool/issues/22)
+records the owner decision and redistribution evidence needed. This change does
+not choose a license or alter existing grants.
