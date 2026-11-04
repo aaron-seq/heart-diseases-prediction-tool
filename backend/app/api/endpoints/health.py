@@ -2,7 +2,7 @@
 Health check endpoints for the API.
 """
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Response
 from datetime import datetime
 from typing import Dict, Any
 
@@ -44,9 +44,10 @@ async def health_check() -> APIHealthResponse:
 @router.get(
     "/ready",
     summary="Readiness Check",
-    description="Check if the API is ready to serve requests."
+    description="Check if the API is ready to serve requests.",
+    responses={503: {"description": "Prediction model unavailable"}},
 )
-async def readiness_check() -> Dict[str, Any]:
+async def readiness_check(response: Response) -> Dict[str, Any]:
     """
     Readiness probe for container orchestration.
     
@@ -55,6 +56,7 @@ async def readiness_check() -> Dict[str, Any]:
     """
     
     is_ready = ml_service.is_model_loaded
+    response.status_code = 200 if is_ready else 503
     
     return {
         "ready": is_ready,

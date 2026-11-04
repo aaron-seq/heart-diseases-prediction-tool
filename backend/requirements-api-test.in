@@ -1,0 +1,6 @@
+-r requirements-api.in
+# Keep API dependency resolution identical to the serving lock.
+-c requirements-api.txt
+httpx==0.28.1
+# First patched release for GHSA-6w46-j5rx-g56g; no plugin integrations required.
+pytest==9.0.3

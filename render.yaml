@@ -17,7 +17,7 @@ services:
       - key: LOG_LEVEL
         value: INFO
       - key: ALLOWED_ORIGINS
-        value: https://your-frontend-url.vercel.app,http://localhost:5173
+        value: '["https://your-frontend-url.vercel.app","http://localhost:5173"]'
     healthCheckPath: /api/v1/health
 
   # Frontend Static Site  
