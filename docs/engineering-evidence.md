@@ -104,7 +104,7 @@ transitives remain unresolved; restricted artifacts retain details. These scans
 were also run by the baseline agent. No clean-backend claim follows.
 
 Parent checked common provider-token/private-key patterns in HEAD and all 97
-ancestors of baseline `3583203`: zero candidate files for those patterns. No live
+revisions reachable from baseline `3583203` (including that revision): zero candidate files for those patterns. No live
 credential validation was attempted. This deliberately limited search does not
 replace Gitleaks/TruffleHog or prove no secrets exist. Specialist secret, container,
 Actions and dynamic scanners were unavailable/not run. Dependabot alerts and

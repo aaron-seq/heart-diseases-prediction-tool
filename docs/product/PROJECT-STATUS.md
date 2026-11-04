@@ -15,6 +15,9 @@ Last verified: 2026-11-04, Asia/Kolkata.
   [PR #24](https://github.com/aaron-seq/heart-diseases-prediction-tool/pull/24) is
   pushed and draft. Its [current-head checks](https://github.com/aaron-seq/heart-diseases-prediction-tool/pull/24/checks)
   and Project record hosted verification; no merge or deployment is inferred.
+  Published Linux frontend CI passed Node 22/24 at `89ceed8`; the overall run
+  failed in inherited backend jobs. Later documentation edits require their own
+  current-head check inspection, as recorded in the PR/Project.
 - Frontend implementation is locally verified: clean install, lint/types/build,
   six production-bundle Chromium regressions and fresh same-system review.
   Detailed commands, versions, Red/Green and limits are in the evidence record.
