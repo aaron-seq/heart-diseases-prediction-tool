@@ -6,7 +6,8 @@ tracks execution; [checkpoint](PROJECT-STATUS.md) records verified delivery stat
 
 ## Current objective
 
-Give contributors a reproducible frontend build and an honest API-health screen.
+Give contributors a reproducible frontend build, an honest API-health screen,
+and an API that starts offline with explicit model availability.
 The existing screen is a health probe; backend predictions and notebook research
 are separate capabilities. Source: [App](../../frontend/src/App.tsx),
 [backend schema](../../backend/app/models/schemas.py).
@@ -16,6 +17,8 @@ are separate capabilities. Source: [App](../../frontend/src/App.tsx),
 | FR-001 | Health probe uses configured API origin or same-origin `/api`; shows pending, success, failure and recovery without overlapping requests | [#5](https://github.com/aaron-seq/heart-diseases-prediction-tool/issues/5) |
 | NFR-001 | Clean lockfile install, lint, types, build and production-bundle browser tests pass on the supported frontend matrix | [#5](https://github.com/aaron-seq/heart-diseases-prediction-tool/issues/5) |
 | NFR-002 | Documentation distinguishes tested frontend behavior from unverified model quality, runtime and deployment claims | [#5](https://github.com/aaron-seq/heart-diseases-prediction-tool/issues/5), [evidence](../engineering-evidence.md) |
+| FR-002 | Missing ML dependencies/artifacts or load errors leave health available, readiness/predictions 503, with no startup training; controlled-model success remains covered | [#12](https://github.com/aaron-seq/heart-diseases-prediction-tool/issues/12) |
+| NFR-003 | API-only hash locks install consistently; actual lifespan/contracts and a real local Uvicorn smoke pass on supported Python | [#12](https://github.com/aaron-seq/heart-diseases-prediction-tool/issues/12) |
 
 Assumed users are contributors and prototype evaluators. Actual user demand,
 clinical utility, calibrated prediction quality, performance targets and adoption
@@ -26,8 +29,9 @@ reproduce the selected checks; passing checks do not establish medical outcomes.
 
 | Sequence | Outcome and dependencies |
 | --- | --- |
-| Now | [Milestone 1](https://github.com/aaron-seq/heart-diseases-prediction-tool/milestone/1): frontend health/build verification; requires review, exact-head frontend CI and documentation. No prediction UI or deployment. |
-| Next | Reconcile [runtime dependencies #4](https://github.com/aaron-seq/heart-diseases-prediction-tool/issues/4), [model startup #12](https://github.com/aaron-seq/heart-diseases-prediction-tool/issues/12), [API tests #7](https://github.com/aaron-seq/heart-diseases-prediction-tool/issues/7) and [container execution #9](https://github.com/aaron-seq/heart-diseases-prediction-tool/issues/9). Requires supported Python dependencies and trusted model artifacts. |
+| Review | [Milestone 1](https://github.com/aaron-seq/heart-diseases-prediction-tool/milestone/1) / [PR #24](https://github.com/aaron-seq/heart-diseases-prediction-tool/pull/24): frontend health/build checks pass; review/integration pending. |
+| Now | [Milestone 2](https://github.com/aaron-seq/heart-diseases-prediction-tool/milestone/2) / [#12](https://github.com/aaron-seq/heart-diseases-prediction-tool/issues/12): offline API startup, explicit readiness and a reproducible API-only test path. Depends on the reviewed frontend branch; real-model acceptance stays separate. |
+| Next | Reconcile [full inference dependencies #4](https://github.com/aaron-seq/heart-diseases-prediction-tool/issues/4), [real-model API tests #7](https://github.com/aaron-seq/heart-diseases-prediction-tool/issues/7) and [container execution #9](https://github.com/aaron-seq/heart-diseases-prediction-tool/issues/9). Requires trusted model artifacts and supported ML dependencies. |
 | Next | Verify training/held-out preprocessing in [#6](https://github.com/aaron-seq/heart-diseases-prediction-tool/issues/6) before publishing accuracy claims. Resolve [license/provenance #22](https://github.com/aaron-seq/heart-diseases-prediction-tool/issues/22) before redistribution. |
 | Later | Consider a prediction UI only after a tested API/model contract and an explicit product decision. No delivery date or user benefit is assumed. |
 

@@ -43,15 +43,28 @@ The backend accepts a `patient_data` object and prediction options, as defined i
 model-status and prediction operations. With a configured backend running,
 [Swagger UI](http://localhost:8000/docs) describes its contract.
 
-The existing setup targets Python 3.11 and
-[backend/requirements.txt](backend/requirements.txt). Full dependency installation,
-trained-model loading, inference and Docker startup remain unverified in this
-delivery; follow [issues #4](https://github.com/aaron-seq/heart-diseases-prediction-tool/issues/4),
-[#7](https://github.com/aaron-seq/heart-diseases-prediction-tool/issues/7),
-[#9](https://github.com/aaron-seq/heart-diseases-prediction-tool/issues/9) and
-[#12](https://github.com/aaron-seq/heart-diseases-prediction-tool/issues/12).
-Startup can download training data and train if model loading fails; it is not
-an offline inference-only quickstart.
+Use Python 3.11 or 3.13 for API-only diagnostics:
+
+```sh
+cd backend
+python -m venv .venv-api
+# Activate: Windows .venv-api\Scripts\Activate.ps1; Linux: . .venv-api/bin/activate
+python -m pip install --require-hashes -r requirements-api.txt
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+```
+
+This starts the real API without the ML stack or saved model. Observed behavior:
+`/api/v1/health` returns 200 with `status: "degraded"`; `/api/v1/ready` returns 503
+with `ready: false`; valid prediction requests return 503. Startup never trains
+or downloads a dataset. A failed model reload revokes readiness.
+
+[`examples/prediction-request.json`](backend/examples/prediction-request.json)
+is a synthetic schema example, not a patient record or evaluated prediction.
+Use `MODEL_PATH` for trusted model artifacts and `ALLOWED_ORIGINS` as a JSON array
+of frontend origins. Full neural-model dependencies, artifact loading/inference
+and Docker startup remain unverified; see [#4](https://github.com/aaron-seq/heart-diseases-prediction-tool/issues/4),
+[#7](https://github.com/aaron-seq/heart-diseases-prediction-tool/issues/7) and
+[#9](https://github.com/aaron-seq/heart-diseases-prediction-tool/issues/9).
 
 The [notebook](Enhanced2025_Heart_Disease_Prediction.ipynb) contains exploratory
 training/evaluation code, without saved execution results. Held-out evaluation
