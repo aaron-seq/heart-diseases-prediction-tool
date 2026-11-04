@@ -12,7 +12,9 @@ Last verified: 2026-11-04, Asia/Kolkata.
   reproducible frontend build and configured health probe. Branch
   `codex/5-frontend-verification`; base `3583203`, frontend code `8007ce0`.
   Delivery/configuration documentation is committed after that code revision.
-  Check the linked PR's current head/checks for final publication and CI state.
+  [PR #24](https://github.com/aaron-seq/heart-diseases-prediction-tool/pull/24) is
+  pushed and draft. Its [current-head checks](https://github.com/aaron-seq/heart-diseases-prediction-tool/pull/24/checks)
+  and Project record hosted verification; no merge or deployment is inferred.
 - Frontend implementation is locally verified: clean install, lint/types/build,
   six production-bundle Chromium regressions and fresh same-system review.
   Detailed commands, versions, Red/Green and limits are in the evidence record.
