@@ -79,6 +79,7 @@ The Compose file is in `backend/`; it does not provide a frontend service.
 - [Threat model, test map and evidence](docs/engineering-evidence.md)
 - [Milestone 1](https://github.com/aaron-seq/heart-diseases-prediction-tool/milestone/1)
 - [Draft PR #24 and current checks](https://github.com/aaron-seq/heart-diseases-prediction-tool/pull/24)
+- [API startup draft PR #25](https://github.com/aaron-seq/heart-diseases-prediction-tool/pull/25) / [milestone 2](https://github.com/aaron-seq/heart-diseases-prediction-tool/milestone/2)
 - [Engineering Project](https://github.com/users/aaron-seq/projects/13) (maintainer access)
 - [Repository issues](https://github.com/aaron-seq/heart-diseases-prediction-tool/issues)
 

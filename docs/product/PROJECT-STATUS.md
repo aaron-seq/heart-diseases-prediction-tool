@@ -13,7 +13,9 @@ Last verified: 2026-11-04, Asia/Kolkata.
   `codex/12-offline-api-startup`, based on `8ab0e12` / unmerged
   [PR #24](https://github.com/aaron-seq/heart-diseases-prediction-tool/pull/24).
   Implementation `6341b68`, metadata fix `6a5bb3f`; delivery docs follow those
-  commits. Issue #12 and the Project link the actual stacked PR/current checks.
+  commits. [Draft PR #25](https://github.com/aaron-seq/heart-diseases-prediction-tool/pull/25)
+  is stacked on #24; its [current-head checks](https://github.com/aaron-seq/heart-diseases-prediction-tool/pull/25/checks)
+  and the Project record final hosted state.
 - API starts without ML dependencies/artifacts, serves degraded health, and
   returns 503 for readiness/predictions. Startup never trains. Invalid model
   metadata cannot report ready. API-only hash locks and actual Uvicorn smoke are
@@ -47,6 +49,8 @@ Last verified: 2026-11-04, Asia/Kolkata.
 - Hosted Python 3.11/3.13 results belong to the current stacked PR head and
   Project. Inspect them before acceptance. Docker CLI is present but its local
   daemon is unavailable. Dependency/config deprecation warnings remain visible.
+  Both API jobs passed at `171531d` in [published CI](https://github.com/aaron-seq/heart-diseases-prediction-tool/actions/runs/41780315242);
+  later documentation edits require their own current-head check inspection.
 
 ## Resume here
 
