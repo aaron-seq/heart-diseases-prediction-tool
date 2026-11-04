@@ -34,6 +34,7 @@ class HeartDiseaseMLService:
             if self.predictor is None:
                 self.predictor = self._create_predictor()
             self.predictor.load_model()
+            self._build_model_health_status(self.predictor.model_metadata, True)
         except Exception as error:
             # Model availability must not prevent liveness/diagnostics or start training.
             logger.warning(
@@ -258,9 +259,14 @@ class HeartDiseaseMLService:
         """Get current model health and performance metrics."""
         
         model_metadata = self.predictor.model_metadata if self.is_model_loaded else {}
+        return self._build_model_health_status(model_metadata, self.is_model_loaded)
+
+    def _build_model_health_status(self, model_metadata, is_model_healthy) -> ModelHealthStatus:
+        if not isinstance(model_metadata, dict):
+            raise ValueError("Model metadata must be a JSON object")
         
         return ModelHealthStatus(
-            is_model_healthy=self.is_model_loaded,
+            is_model_healthy=is_model_healthy,
             model_version=model_metadata.get('model_version', 'unknown'),
             last_training_date=model_metadata.get('training_date', 'unknown'),
             model_accuracy=model_metadata.get('test_accuracy', 0.0),

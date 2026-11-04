@@ -2,7 +2,7 @@
 Pydantic schemas for request/response models.
 """
 
-from typing import Optional, List
+from typing import List
 from pydantic import BaseModel, Field, validator
 from enum import Enum
 
@@ -105,7 +105,10 @@ class ModelHealthStatus(BaseModel):
     is_model_healthy: bool = Field(..., description="Overall model health status")
     model_version: str = Field(..., description="Current model version")
     last_training_date: str = Field(..., description="Last model training date")
-    model_accuracy: float = Field(..., description="Model accuracy on test set")
+    model_accuracy: float = Field(
+        ..., strict=True, ge=0, le=1, allow_inf_nan=False,
+        description="Model accuracy fraction on test set (0-1)",
+    )
     total_predictions_made: int = Field(..., description="Total predictions made")
     average_response_time_ms: float = Field(..., description="Average response time in milliseconds")
 
