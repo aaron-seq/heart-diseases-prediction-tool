@@ -6,6 +6,9 @@ Delivery state and continuation: [checkpoint](product/PROJECT-STATUS.md).
 This is a bounded engineering assessment, not clinical validation or a complete
 security audit. No deployed/shared service was tested.
 
+The frontend records below describe the first milestone. The subsequent
+[API startup milestone](#api-startup-milestone) records the new backend behavior.
+
 ## Baseline and scope
 
 The initial working tree was clean. No checkpoint, lockfile, license file or
@@ -140,3 +143,107 @@ were read back through GitHub GraphQL. The API exposes no grouping input here;
 board grouping/UI behavior remains unverified. No Insights chart is claimed.
 No branch-protection/required-check setting was changed or verified. Current-head
 CI and review state belong in the PR and Project, not inferred from workflow YAML.
+
+## API startup milestone
+
+Primary [issue #12](https://github.com/aaron-seq/heart-diseases-prediction-tool/issues/12),
+[milestone 2](https://github.com/aaron-seq/heart-diseases-prediction-tool/milestone/2).
+Base `8ab0e12` / reviewed frontend PR #24; implementation `6341b68` followed by
+workflow/documentation review. No main-branch merge or deployment is implied.
+Metadata validation is fixed in `6a5bb3f`; subsequent delivery changes are
+workflow/docs only. The fresh verifier reran all 29 tests and the real Uvicorn
+smoke, reproduced the original null-metadata case as degraded, and verified
+null-to-valid recovery through health/readiness/prediction with zero training.
+No concrete regression remained within that tested scope.
+
+Problem: schema imports eagerly imported the scientific model module, and a load
+failure triggered training before the lifespan could yield. Parent reproduced
+five failures with a training spy that raises instead of doing work: three load
+errors aborted startup, a failed reload attempted training, and readiness returned
+200 while unavailable. Eight normal contract tests passed in that Red run.
+Fresh same-system review then reproduced a metadata edge case: a successful load
+with JSON-null metadata broke health/status while readiness remained true. Parent
+observed ten further Red metadata cases and validated metadata before declaring
+ready. Non-object/wrong-typed metadata and non-finite/out-of-range accuracy are
+rejected; numeric accuracy boundaries 0/1 remain valid. This is an artifact
+contract check, not a validation of model quality.
+
+Decision: defer model construction; initialize readiness false, load supplied
+artifacts, and retain degraded availability on any load error. Never train from
+startup. Readiness now returns HTTP 503 when unavailable, preserving its JSON
+shape; health/liveness remain available, and prediction already rejects with 503.
+Successful controlled loading still runs through the actual app/lifespan/service.
+The service accepts an injected predictor for contract tests; production still
+constructs the original model. No fake predictor is shipped as runtime behavior.
+
+Retaining automatic training would preserve network/computation side effects and
+hide artifact failures. Bundling or replacing a model would require provenance,
+evaluation and licensing evidence that is absent. This slice adds no model/data
+asset or clinical/performance claim. Reverting restores the earlier startup
+failure/training behavior and must be reassessed before any deployment.
+
+| Requirement / oracle | Retained check | Coverage / limit |
+| --- | --- | --- |
+| FR-002: import API without ML | `tests/test_import_boundary.py` blocks scientific imports in a fresh process | Real schema/app imports; startup loading tested separately |
+| FR-002: unavailable model never trains | `tests/test_startup.py`: missing file, invalid model and missing-dependency load errors; factory error; failed reload and invalid metadata | Controlled predictor spies; real handlers/status/503, no real corrupt Keras artifact parsed |
+| FR-002: valid controlled path preserved | `tests/test_prediction.py`, `tests/test_health.py` | Exact request/mapping/response and lifespan load count; no real neural inference |
+| NFR-003: actual server without ML | `python tests/smoke_api.py` | Real Uvicorn, TCP/HTTP, JSON-origin config, health/liveness, readiness and valid prediction 503; ML packages/artifacts absent |
+| NFR-003: reproducible dependencies | API/test `.in` files and hash locks, clean install, `pip check`, dedicated CI | API-only profiles; full ML requirements remain unresolved under #4 |
+
+Parent personally ran on Windows x64/Python 3.11.9 in a new isolated environment:
+
+```sh
+python -m pip install --require-hashes -r requirements-api.txt
+python -m pip install --require-hashes -r requirements-api-test.txt
+python -m pip check
+python -m pytest tests -q -p no:cacheprovider
+python tests/smoke_api.py
+```
+
+Installs/check exit 0; **29 tests pass**, with 13 library/config deprecation
+warnings retained. Actual Uvicorn smoke exits 0 after graceful shutdown and temp
+cleanup. Missing NumPy/pandas/TensorFlow/scikit-learn/SHAP/MLflow is asserted by
+the smoke checker. A first subprocess-based smoke passed HTTP assertions but
+failed Windows log-file cleanup; the retained checker uses a gracefully stopped
+Uvicorn thread and explicitly closes logging. No cleanup error is suppressed.
+No orphaned test server remained when checked.
+
+Parent also ran `python -m ruff check` with `--select E9,F` on affected app files
+and tests, and `python -m black --check backend/tests`: both pass. JSON/YAML and
+Render's `ALLOWED_ORIGINS` JSON value were parsed. No frontend source changed, so
+its previously verified checks were not rerun solely for backend work.
+
+Dependency decision: reuse the locally proven FastAPI 0.141.1, Pydantic 2.11.3,
+settings 2.3.0, Uvicorn 0.34.0 and Loguru 0.7.3 API versions. Pin Starlette 1.3.1
+for the tested HTTPX 0.28 adapter; its deprecation warning is visible. Compile
+complete pinned/hash-checked API and test graphs, retaining Windows-only markers.
+Direct package names/source links/licenses were checked against PyPI and upstream
+repositories. This profile deliberately excludes inference/training libraries;
+the contradictory full-runtime pins are not silently replaced or declared fixed.
+
+The initially considered pytest 8.3.4 test pin triggered
+[GHSA-6w46-j5rx-g56g](https://github.com/advisories/GHSA-6w46-j5rx-g56g).
+The [upstream 9.0.3 release](https://github.com/pytest-dev/pytest/releases/tag/9.0.3)
+and advisory identify the patched version. The test lock uses 9.0.3; the full
+suite was rerun. No extra pytest plugins are needed by this profile. Parent
+pip-audit 2.10.1 scans of both final flattened locks returned **zero known alerts**
+(exit 0); the initial duplicated pytest rows represented one advisory. Scope is
+lock entries, excluding bootstrap tools and the separate full ML environment.
+No exploit or global security conclusion follows from these scan results.
+
+Lock maintenance uses pip-tools 7.5.2 in a separate tooling environment, Python
+3.11, following [official hash/layered-requirements guidance](https://pip-tools.pypa.io/en/stable/):
+
+```sh
+python -m piptools compile --generate-hashes --strip-extras --no-header --no-emit-index-url --no-emit-trusted-host --pip-args=--only-binary=:all: --output-file requirements-api.txt requirements-api.in
+python -m piptools compile --generate-hashes --strip-extras --no-header --no-emit-index-url --no-emit-trusted-host --pip-args=--only-binary=:all: --output-file requirements-api-test.txt requirements-api-test.in
+```
+
+The dedicated API workflow uses ordinary `pull_request`/main-push events,
+`contents: read`, official SHA-pinned actions and Python 3.11/3.13. It does not
+relax the existing ML/backend workflow or claim branch protection. Inspect the
+current PR head for hosted results. [FastAPI lifespan testing guidance](https://fastapi.tiangolo.com/advanced/testing-events/)
+supports the explicit TestClient context used here. Remaining: real trained-model
+loading/inference and calibration, full ML locks/advisories, Docker (local daemon
+unavailable), deployed behavior, scale and recovery. Licensing remains unresolved
+by the owner's explicit decision in #22.

@@ -5,7 +5,7 @@ Heart Disease Prediction API with advanced ML capabilities.
 
 import asyncio
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
@@ -28,7 +28,10 @@ async def lifespan(app: FastAPI):
     try:
         # Initialize ML service
         await ml_service.initialize_service()
-        logger.info("ML service initialized successfully")
+        if ml_service.is_model_loaded:
+            logger.info("ML service initialized successfully")
+        else:
+            logger.warning("API started with an unavailable model; predictions return 503")
         
     except Exception as error:
         logger.error(f"Failed to initialize ML service: {error}")

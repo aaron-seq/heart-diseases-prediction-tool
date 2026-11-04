@@ -3,22 +3,23 @@ Machine Learning service for heart disease prediction.
 Handles model operations and prediction logic.
 """
 
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional, TYPE_CHECKING
 import asyncio
 from datetime import datetime
 from loguru import logger
 
-from ..models.heart_disease_predictor import EnhancedHeartDiseasePredictor
 from ..models.schemas import PatientHealthData, HeartDiseaseRiskPrediction, ModelHealthStatus
-from ..core.config import app_settings
+
+if TYPE_CHECKING:
+    from ..models.heart_disease_predictor import EnhancedHeartDiseasePredictor
 
 
 class HeartDiseaseMLService:
     """Service class for heart disease ML operations."""
     
-    def __init__(self):
+    def __init__(self, predictor: Optional["EnhancedHeartDiseasePredictor"] = None):
         """Initialize the ML service."""
-        self.predictor = EnhancedHeartDiseasePredictor()
+        self.predictor = predictor
         self.total_predictions = 0
         self.average_response_time = 0.0
         self.is_model_loaded = False
@@ -26,28 +27,37 @@ class HeartDiseaseMLService:
         logger.info("Heart Disease ML Service initialized")
     
     async def initialize_service(self) -> None:
-        """Initialize the service and load the model."""
+        """Load operator-supplied artifacts; remain unavailable if loading fails."""
+        self.is_model_loaded = False
         try:
             logger.info("Loading heart disease prediction model...")
-            
-            # Try to load existing model
-            try:
-                self.predictor.load_model()
-                self.is_model_loaded = True
-                logger.info("Pre-trained model loaded successfully")
-            except Exception as load_error:
-                logger.warning(f"Could not load existing model: {load_error}")
-                logger.info("Training new model...")
-                
-                # Train new model if loading fails
-                await self._train_new_model()
-                
+            if self.predictor is None:
+                self.predictor = self._create_predictor()
+            self.predictor.load_model()
+            self._build_model_health_status(self.predictor.model_metadata, True)
         except Exception as error:
-            logger.error(f"Failed to initialize ML service: {error}")
-            raise
+            # Model availability must not prevent liveness/diagnostics or start training.
+            logger.warning(
+                "Model unavailable ({}). Check ML dependencies and MODEL_PATH; "
+                "predictions remain disabled. Startup does not train a model.",
+                type(error).__name__,
+            )
+            return
+        self.is_model_loaded = True
+        logger.info("Pre-trained model loaded successfully")
+
+    @staticmethod
+    def _create_predictor():
+        # Schema and health imports must work without the optional ML stack.
+        from ..models.heart_disease_predictor import EnhancedHeartDiseasePredictor
+
+        return EnhancedHeartDiseasePredictor()
     
     async def _train_new_model(self) -> None:
         """Train a new model asynchronously."""
+
+        if self.predictor is None:
+            self.predictor = self._create_predictor()
         
         # Run training in thread pool to avoid blocking
         loop = asyncio.get_event_loop()
@@ -248,10 +258,15 @@ class HeartDiseaseMLService:
     def get_model_health_status(self) -> ModelHealthStatus:
         """Get current model health and performance metrics."""
         
-        model_metadata = self.predictor.model_metadata
+        model_metadata = self.predictor.model_metadata if self.is_model_loaded else {}
+        return self._build_model_health_status(model_metadata, self.is_model_loaded)
+
+    def _build_model_health_status(self, model_metadata, is_model_healthy) -> ModelHealthStatus:
+        if not isinstance(model_metadata, dict):
+            raise ValueError("Model metadata must be a JSON object")
         
         return ModelHealthStatus(
-            is_model_healthy=self.is_model_loaded,
+            is_model_healthy=is_model_healthy,
             model_version=model_metadata.get('model_version', 'unknown'),
             last_training_date=model_metadata.get('training_date', 'unknown'),
             model_accuracy=model_metadata.get('test_accuracy', 0.0),

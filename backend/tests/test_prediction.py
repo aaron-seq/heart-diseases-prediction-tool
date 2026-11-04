@@ -1,34 +1,50 @@
-import pytest
-
-
 def test_prediction_validation_error(client):
-    # Missing required fields; expect 422
     resp = client.post("/api/v1/predict", json={"age": 50})
-    assert resp.status_code in {400, 422}
+    assert resp.status_code == 422
 
 
-def test_prediction_happy_path(client):
-    payload = {
-        "age": 55,
-        "is_male": True,
-        "chest_pain_type": "typical_angina",
-        "resting_blood_pressure": 130,
-        "serum_cholesterol": 245,
-        "fasting_blood_sugar_over_120": False,
-        "resting_ecg_results": "normal",
-        "maximum_heart_rate_achieved": 150,
-        "exercise_induced_angina": False,
-        "st_depression_exercise": 1.0,
-        "st_slope_peak_exercise": "upsloping",
-        "major_vessels_colored": 0,
-        "thalassemia_type": "normal",
-    }
-    resp = client.post("/api/v1/predict", json=payload)
-    assert resp.status_code in {200, 201}
+def test_prediction_happy_path(client, service, patient_data):
+    resp = client.post("/api/v1/predict", json={"patient_data": patient_data})
+    assert resp.status_code == 200
     body = resp.json()
-    # Response schema keys may vary; check common signals
-    assert (
-        "risk_probability" in body
-        or "probability" in body
-        or "confidence_score" in body
-    )
+    assert body["risk_probability"] == 0.25
+    assert body["has_heart_disease_risk"] is False
+    assert body["risk_level"] == "Low Risk"
+    assert body["confidence_score"] == 0.75
+    assert body["primary_risk_factors"] == []
+    assert body["protective_factors"] == []
+    assert body["lifestyle_recommendations"]
+    assert body["medical_recommendations"]
+    assert service.predictor.prediction_inputs == [
+        {
+            "age": 55,
+            "sex": 1,
+            "cp": 1,
+            "trestbps": 130,
+            "chol": 245,
+            "fbs": 0,
+            "restecg": 0,
+            "thalach": 150,
+            "exang": 0,
+            "oldpeak": 1.0,
+            "slope": 1,
+            "ca": 0,
+            "thal": 3,
+        }
+    ]
+    assert service.total_predictions == 1
+    assert service.predictor.load_calls == 1
+    assert service.predictor.training_calls == 0
+
+
+def test_flat_payload_is_rejected(client, service, patient_data):
+    resp = client.post("/api/v1/predict", json=patient_data)
+    assert resp.status_code == 422
+    assert service.predictor.prediction_inputs == []
+
+
+def test_prediction_when_model_unavailable(client, service, patient_data):
+    service.is_model_loaded = False
+    resp = client.post("/api/v1/predict", json={"patient_data": patient_data})
+    assert resp.status_code == 503
+    assert service.predictor.prediction_inputs == []

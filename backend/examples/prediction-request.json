@@ -1,0 +1,18 @@
+{
+  "patient_data": {
+    "age": 55,
+    "is_male": true,
+    "chest_pain_type": "typical_angina",
+    "resting_blood_pressure": 130,
+    "serum_cholesterol": 245,
+    "fasting_blood_sugar_over_120": false,
+    "resting_ecg_results": "normal",
+    "maximum_heart_rate_achieved": 150,
+    "exercise_induced_angina": false,
+    "st_depression_exercise": 1.0,
+    "st_slope_peak_exercise": "upsloping",
+    "major_vessels_colored": 0,
+    "thalassemia_type": "normal"
+  },
+  "explain_prediction": false
+}
