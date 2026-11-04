@@ -47,17 +47,19 @@ jobs:
   frontend-tests:
     name: Frontend Tests
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     
     strategy:
       matrix:
-        node-version: ['16', '18', '20']
+        node-version: ['22', '24']
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         
       - name: Set up Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
@@ -69,20 +71,32 @@ jobs:
         
       - name: Run linter
         working-directory: ./frontend
-        run: npm run lint || true
-        
-      - name: Run tests
+        run: npm run lint
+
+      - name: Check types
         working-directory: ./frontend
-        run: npm test -- --coverage || true
-        
+        run: npm run type-check
+
       - name: Build application
         working-directory: ./frontend
         run: npm run build
+
+      - name: Install test browser
+        working-directory: ./frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Run tests
+        working-directory: ./frontend
+        run: npm test
+
+      - name: Audit frontend dependencies
+        working-directory: ./frontend
+        run: npm audit --audit-level=high
         
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: frontend-build
+          name: frontend-build-node-${{ matrix.node-version }}
           path: frontend/dist/
 
   code-quality:

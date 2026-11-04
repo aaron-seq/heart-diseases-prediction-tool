@@ -1,0 +1,32 @@
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+!**/.env.example
+
+# Dependencies and generated outputs
+node_modules/
+dist/
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+coverage/
+coverage.xml
+htmlcov/
+playwright-report/
+test-results/
+.test-dist*/
+.test-builds/
+
+# Local model artifacts and potentially sensitive logs
+models/saved_models/
+*.h5
+*.keras
+*.pkl
+logs/
+mlruns/
+*.db
+*.log
